@@ -1,7 +1,7 @@
 import type { NPC } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, Handcuffs } from "lucide-react";
+import { Users, Gavel } from "lucide-react";
 
 interface NPCListProps {
   npcs: Record<string, NPC>;
@@ -42,7 +42,7 @@ export function NPCList({ npcs, currentRoom }: NPCListProps) {
         {arrestedNPCs.length > 0 && (
           <div className="space-y-2 pt-2 border-t border-border">
             <div className="text-xs text-destructive font-semibold flex items-center gap-1">
-              <Handcuffs className="w-3 h-3" />
+              <Gavel className="w-3 h-3" />
               ARRESTED:
             </div>
             {arrestedNPCs.map(npc => (
