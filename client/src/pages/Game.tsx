@@ -11,12 +11,17 @@ import { NPCList } from "@/components/NPCList";
 import { HelpPanel } from "@/components/HelpPanel";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { PlayCircle, RotateCcw } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { PlayCircle, RotateCcw, Calendar, Shuffle, Hash } from "lucide-react";
 
 export default function Game() {
   const [gameStarted, setGameStarted] = useState(false);
   const [commandHistory, setCommandHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
+  const [gameMode, setGameMode] = useState<'random' | 'daily' | 'custom'>('random');
+  const [caseCode, setCaseCode] = useState('');
 
   const { data: gameState, isLoading } = useQuery<GameState>({
     queryKey: ['/api/game/state'],
@@ -26,7 +31,10 @@ export default function Game() {
 
   const startGameMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest<GameState>('POST', '/api/game/new', {});
+      return await apiRequest<GameState>('POST', '/api/game/new', {
+        mode: gameMode,
+        caseCode: gameMode === 'custom' ? caseCode : undefined,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/game/state'] });
@@ -52,6 +60,9 @@ export default function Game() {
   };
 
   const handleNewGame = () => {
+    if (gameMode === 'custom' && !caseCode.trim()) {
+      return;
+    }
     setCommandHistory([]);
     setHistoryIndex(-1);
     startGameMutation.mutate();
@@ -93,15 +104,74 @@ export default function Game() {
             </div>
           </div>
 
+          <div className="space-y-4">
+            <div className="space-y-3">
+              <Label className="text-sm font-mono text-primary">SELECT CASE MODE</Label>
+              <RadioGroup value={gameMode} onValueChange={(value: any) => setGameMode(value)} data-testid="radio-group-game-mode">
+                <div className="flex items-center space-x-2 hover-elevate rounded-md p-3 transition-colors">
+                  <RadioGroupItem value="random" id="random" data-testid="radio-random" />
+                  <Label htmlFor="random" className="flex-1 cursor-pointer">
+                    <div className="flex items-center gap-2">
+                      <Shuffle className="w-4 h-4 text-primary" />
+                      <div>
+                        <div className="font-semibold text-foreground">Random Case</div>
+                        <div className="text-xs text-muted-foreground">Fresh mystery every time</div>
+                      </div>
+                    </div>
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2 hover-elevate rounded-md p-3 transition-colors">
+                  <RadioGroupItem value="daily" id="daily" data-testid="radio-daily" />
+                  <Label htmlFor="daily" className="flex-1 cursor-pointer">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-primary" />
+                      <div>
+                        <div className="font-semibold text-foreground">Daily Case</div>
+                        <div className="text-xs text-muted-foreground">Same case for everyone today</div>
+                      </div>
+                    </div>
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2 hover-elevate rounded-md p-3 transition-colors">
+                  <RadioGroupItem value="custom" id="custom" data-testid="radio-custom" />
+                  <Label htmlFor="custom" className="flex-1 cursor-pointer">
+                    <div className="flex items-center gap-2">
+                      <Hash className="w-4 h-4 text-primary" />
+                      <div>
+                        <div className="font-semibold text-foreground">Custom Case Code</div>
+                        <div className="text-xs text-muted-foreground">Replay or share a specific case</div>
+                      </div>
+                    </div>
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            {gameMode === 'custom' && (
+              <div className="space-y-2">
+                <Label htmlFor="case-code" className="text-sm font-mono text-primary">ENTER CASE CODE</Label>
+                <Input
+                  id="case-code"
+                  value={caseCode}
+                  onChange={(e) => setCaseCode(e.target.value.toUpperCase())}
+                  placeholder="e.g., A3F2B1C4"
+                  className="font-mono uppercase"
+                  maxLength={8}
+                  data-testid="input-case-code"
+                />
+              </div>
+            )}
+          </div>
+
           <Button 
             size="lg"
             onClick={handleNewGame}
-            disabled={startGameMutation.isPending}
+            disabled={startGameMutation.isPending || (gameMode === 'custom' && !caseCode.trim())}
             className="w-full text-base"
             data-testid="button-new-game"
           >
             <PlayCircle className="w-5 h-5 mr-2" />
-            {startGameMutation.isPending ? 'INITIALIZING...' : 'START NEW GAME'}
+            {startGameMutation.isPending ? 'INITIALIZING...' : 'START GAME'}
           </Button>
         </Card>
       </div>
