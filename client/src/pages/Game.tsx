@@ -32,10 +32,11 @@ export default function Game() {
 
   const startGameMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest<GameState>('POST', '/api/game/new', {
+      const res = await apiRequest('POST', '/api/game/new', {
         mode: gameMode,
         caseCode: gameMode === 'custom' ? caseCode : undefined,
       });
+      return await res.json() as GameState;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/game/state'] });
@@ -45,7 +46,8 @@ export default function Game() {
 
   const commandMutation = useMutation({
     mutationFn: async (command: string) => {
-      return await apiRequest<CommandResult>('POST', '/api/game/command', { command });
+      const res = await apiRequest('POST', '/api/game/command', { command });
+      return await res.json() as CommandResult;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/game/state'] });
