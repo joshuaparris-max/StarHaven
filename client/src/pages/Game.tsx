@@ -14,7 +14,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { PlayCircle, RotateCcw, Calendar, Shuffle, Hash } from "lucide-react";
+import { PlayCircle, RotateCcw, Calendar, Shuffle, Hash, Copy, Check } from "lucide-react";
 
 export default function Game() {
   const [gameStarted, setGameStarted] = useState(false);
@@ -22,6 +22,7 @@ export default function Game() {
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [gameMode, setGameMode] = useState<'random' | 'daily' | 'custom'>('random');
   const [caseCode, setCaseCode] = useState('');
+  const [copied, setCopied] = useState(false);
 
   const { data: gameState, isLoading } = useQuery<GameState>({
     queryKey: ['/api/game/state'],
@@ -65,7 +66,16 @@ export default function Game() {
     }
     setCommandHistory([]);
     setHistoryIndex(-1);
+    setCopied(false);
     startGameMutation.mutate();
+  };
+
+  const handleCopyCode = () => {
+    if (gameState?.caseCode) {
+      navigator.clipboard.writeText(gameState.caseCode);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
 
   if (!gameStarted) {
@@ -205,6 +215,22 @@ export default function Game() {
           </h1>
           <div className="h-4 w-px bg-border"></div>
           <TimeCountdown time={gameState.time} />
+          <div className="h-4 w-px bg-border"></div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground font-mono">CASE:</span>
+            <button
+              onClick={handleCopyCode}
+              className="flex items-center gap-1 hover-elevate active-elevate-2 px-2 py-1 rounded text-xs font-mono text-primary transition-colors"
+              data-testid="button-copy-case-code"
+            >
+              <span data-testid="text-case-code">{gameState.caseCode}</span>
+              {copied ? (
+                <Check className="w-3 h-3 text-chart-3" />
+              ) : (
+                <Copy className="w-3 h-3" />
+              )}
+            </button>
+          </div>
         </div>
         <Button 
           variant="outline" 
