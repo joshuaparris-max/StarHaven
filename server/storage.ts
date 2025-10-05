@@ -1,9 +1,10 @@
 import type { GameState, Room, Item, NPC, OutputLine } from "@shared/schema";
 import { randomUUID } from "crypto";
+import { SeededRandom, generateCaseCode } from "./seeded-random";
 
 export interface IStorage {
   getGameState(): Promise<GameState | undefined>;
-  createGame(): Promise<GameState>;
+  createGame(caseCode?: string): Promise<GameState>;
   updateGameState(state: GameState): Promise<GameState>;
 }
 
@@ -18,8 +19,8 @@ export class MemStorage implements IStorage {
     return this.gameState;
   }
 
-  async createGame(): Promise<GameState> {
-    this.gameState = this.initializeGame();
+  async createGame(caseCode?: string): Promise<GameState> {
+    this.gameState = this.initializeGame(caseCode);
     return this.gameState;
   }
 
@@ -28,7 +29,9 @@ export class MemStorage implements IStorage {
     return this.gameState;
   }
 
-  private initializeGame(): GameState {
+  private initializeGame(caseCode?: string): GameState {
+    const code = caseCode || generateCaseCode();
+    const rng = new SeededRandom(code);
     const rooms: Record<string, Room> = {
       atrium: {
         id: "atrium",
@@ -207,7 +210,7 @@ export class MemStorage implements IStorage {
     };
 
     const suspects = Object.keys(npcs);
-    const killerId = suspects[Math.floor(Math.random() * suspects.length)];
+    const killerId = suspects[rng.nextInt(suspects.length)];
 
     const evidencePool: Record<string, string[]> = {
       voss: ["dna_fiber", "stimulant", "forged_card"],
@@ -225,7 +228,7 @@ export class MemStorage implements IStorage {
       const poolCopy = [...pool];
       
       for (let i = 0; i < 3; i++) {
-        const idx = Math.floor(Math.random() * poolCopy.length);
+        const idx = rng.nextInt(poolCopy.length);
         selected.push(poolCopy[idx]);
         poolCopy.splice(idx, 1);
       }
@@ -291,6 +294,7 @@ export class MemStorage implements IStorage {
     ];
 
     return {
+      caseCode: code,
       time: 60,
       playerRoom: "atrium",
       inventory: [],
