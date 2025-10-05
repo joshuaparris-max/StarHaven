@@ -31,6 +31,7 @@ export interface NPC {
 }
 
 export interface GameState {
+  caseCode: string;
   time: number;
   playerRoom: string;
   inventory: string[];
@@ -60,4 +61,10 @@ export const commandSchema = z.object({
   command: z.string(),
 });
 
+export const newGameSchema = z.object({
+  caseCode: z.string().optional(),
+  mode: z.enum(['random', 'daily', 'custom']).optional().default('random'),
+});
+
 export type CommandInput = z.infer<typeof commandSchema>;
+export type NewGameInput = z.infer<typeof newGameSchema>;
