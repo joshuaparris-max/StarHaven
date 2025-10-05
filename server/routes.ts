@@ -2,15 +2,31 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { GameEngine } from "./game-engine";
-import { commandSchema } from "@shared/schema";
+import { commandSchema, newGameSchema } from "@shared/schema";
 import type { GameState, CommandResult } from "@shared/schema";
+import { getDailyCaseCode } from "./seeded-random";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const gameEngine = new GameEngine();
 
   app.post("/api/game/new", async (req, res) => {
     try {
-      const gameState = await storage.createGame();
+      const parsed = newGameSchema.safeParse(req.body);
+      if (!parsed.success) {
+        res.status(400).json({ error: "Invalid game parameters" });
+        return;
+      }
+
+      let caseCode: string | undefined;
+      const { mode, caseCode: providedCode } = parsed.data;
+
+      if (mode === 'daily') {
+        caseCode = getDailyCaseCode();
+      } else if (mode === 'custom' && providedCode) {
+        caseCode = providedCode.toUpperCase();
+      }
+
+      const gameState = await storage.createGame(caseCode);
       res.json(gameState);
     } catch (error) {
       console.error("Error creating game:", error);
