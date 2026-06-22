@@ -252,6 +252,7 @@ function goTo(nodeId) {
   const node = nodes[nodeId];
   if (!node) { log('ERROR: node not found — ' + nodeId); return; }
   currentNode = nodeId;
+  if (node.text && node.text.indexOf('ENDING:') > -1) recordEnding(nodeId);
   document.getElementById('choices').innerHTML = '';
   typeText(node.text, () => {
     if (node.choices && node.choices.length > 0) showChoices(node.choices);
@@ -568,9 +569,40 @@ function resetGame() {
   updateStats();
 }
 
+// ─── SAVED PROGRESS (localStorage) ────────────────────────────────────────────
+
+const SAVE_KEY = 'starhaven_endings';
+const TOTAL_ENDINGS = 8;
+
+function loadEndings() {
+  try { return JSON.parse(localStorage.getItem(SAVE_KEY)) || []; }
+  catch (e) { return []; }
+}
+
+function recordEnding(id) {
+  const found = loadEndings();
+  if (!found.includes(id)) {
+    found.push(id);
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify(found)); } catch (e) {}
+  }
+  renderProgress();
+}
+
+function renderProgress() {
+  let el = document.getElementById('progress-bar');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'progress-bar';
+    el.style.cssText = 'font-size:0.72rem;color:#006622;letter-spacing:0.12em;text-align:center;padding-top:6px;';
+    document.getElementById('game-container').appendChild(el);
+  }
+  el.textContent = 'ENDINGS DISCOVERED: ' + loadEndings().length + ' / ' + TOTAL_ENDINGS + ' (saved on this device)';
+}
+
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 
 updateStats();
+renderProgress();
 goTo('start');
 </script>
 </body>
