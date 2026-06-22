@@ -35,6 +35,7 @@
   <div class="choices" id="choices"></div>
   <div class="log" id="log"></div>
   <div class="saved-note" id="savenote"></div>
+  <div id="codex" style="margin-top:18px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 18px"></div>
 </div>
 <script>
 const SKEY='starhaven_save_v1';
@@ -167,10 +168,18 @@ It offers you a choice: take its power cell — a relic worth a fortune — and 
 You leave it watching the stars, a little poorer, strangely lighter. Some debts aren't measured in credits.` },
 };
 
+const ALL_ENDINGS=[['end_rescue','The Lifeline'],['end_smuggler','The Quiet Good'],['end_lawful','The Letter of the Law'],['end_relic','The Last Breath'],['end_caretaker','The Kept Watch'],['end_lost','Lost to the Drift']];
+function renderCodex(){
+  const done=S.endings.length;
+  $('codex').innerHTML=`<div style="font-size:.78rem;letter-spacing:.1em;color:var(--muted);margin-bottom:8px">PILOT'S CODEX · ${done}/6 ENDINGS</div>`+
+    ALL_ENDINGS.map(([id,name])=>{ const got=S.endings.includes(id); return `<div style="font-size:.84rem;padding:3px 0;color:${got?'var(--gold)':'var(--muted)'}">${got?'★ '+name:'☆ ???'}</div>`; }).join('')+
+    (done===6?'<div style="color:var(--good);font-size:.82rem;margin-top:8px">🏆 Master of the Drift — every ending found!</div>':'');
+}
 function render(){
   stats();
   const node = N[S.node];
   $('savenote').textContent = `Endings discovered: ${S.endings.length} / 6 · progress auto-saves`;
+  renderCodex();
   if(node.end){
     if(!S.endings.includes(S.node)){ S.endings.push(S.node); localStorage.setItem('starhaven_endings',JSON.stringify(S.endings)); }
     clearGame();
